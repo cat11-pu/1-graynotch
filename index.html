@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>graynotch 刻度盘</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;background:#111418;color:#e8eef6}
+.wrap{display:grid;grid-template-columns:minmax(360px,1fr) 320px;gap:18px;padding:20px;align-items:start}
+.dial{background:#171c22;border-radius:14px;padding:10px;display:flex;justify-content:center}
+.panel{background:#171c22;border-radius:14px;padding:14px}
+button{font:inherit;padding:6px 12px;margin:0 8px 8px 0;border:1px solid #2c3743;border-radius:8px;background:#1f2731;color:#e8eef6;cursor:pointer}
+input{font:inherit;padding:5px 8px;border:1px solid #2c3743;border-radius:8px;background:#0f1419;color:#e8eef6;width:96px}
+pre{background:#0b0f13;padding:12px;border-radius:10px;overflow:auto;font-size:12px;color:#9fd0ff;margin-top:12px}
+.chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;background:#22303f;color:#9fd0ff;margin:0 6px 6px 0}
+.bad{background:#3a1f24;color:#ff9a9a}
+</style></head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="dial"><svg id="disk" width="380" height="380" viewBox="0 0 380 380"></svg></div>
+    <pre id="out">还没跑</pre>
+  </div>
+  <div class="panel">
+    <h2>操作</h2>
+    <div><button id="left">后退一格</button><button id="right">前进一格</button></div>
+    <div>码字 <input id="code" value="110"><button id="readone">读数</button></div>
+    <div>刻度 <input id="spot" type="number" value="7"><button id="jump">拨到</button></div>
+    <div id="legend" style="margin-top:10px"></div>
+  </div>
+</div>
+<div id="scene" hidden>{
+  "bits": 3,
+  "state": { "bits": 3, "pos": 0, "steps": 0, "traj": [], "reads": [] },
+  "events": [
+    { "kind": "turn", "dir": 1 },
+    { "kind": "turn", "dir": 1 },
+    { "kind": "read", "code": "110" },
+    { "kind": "notch", "spot": 7 },
+    { "kind": "turn", "dir": -1 },
+    { "kind": "read", "code": "000" },
+    { "kind": "notch", "spot": 0 }
+  ]
+}</div>
+<script type="module">
+import { render } from "./app.js";
+
+const spec = JSON.parse(document.getElementById("scene").textContent);
+const svg = document.getElementById("disk");
+function draw() {
+  const view = render(spec);
+  document.getElementById("out").textContent = JSON.stringify(view, null, 1);
+  svg.textContent = "";
+  const total = view.notches.length;
+  view.notches.forEach(function (row, spot) {
+    const angle = (spot / total) * Math.PI * 2 - Math.PI / 2;
+    const x = 190 + Math.cos(angle) * 150;
+    const y = 190 + Math.sin(angle) * 150;
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", x);
+    dot.setAttribute("cy", y);
+    dot.setAttribute("r", spot === view.pos ? 15 : 7);
+    dot.setAttribute("fill", spot === view.pos ? "#2f6fed" : "#3d4b5a");
+    svg.appendChild(dot);
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", x - 16);
+    text.setAttribute("y", y - 22);
+    text.setAttribute("fill", "#9fd0ff");
+    text.setAttribute("font-size", "13");
+    text.textContent = row[1];
+    svg.appendChild(text);
+  });
+  const legend = document.getElementById("legend");
+  legend.textContent = "";
+  const chip = function (label, bad) {
+    const span = document.createElement("span");
+    span.className = bad ? "chip bad" : "chip";
+    span.textContent = label;
+    legend.appendChild(span);
+  };
+  chip("位置 " + view.pos);
+  chip("步数 " + view.steps);
+  chip("单步 " + view.single_step, !view.single_step);
+}
+document.getElementById("left").addEventListener("click", function () {
+  spec.events.push({ kind: "turn", dir: -1 });
+  draw();
+});
+document.getElementById("right").addEventListener("click", function () {
+  spec.events.push({ kind: "turn", dir: 1 });
+  draw();
+});
+document.getElementById("readone").addEventListener("click", function () {
+  spec.events.push({ kind: "read", code: document.getElementById("code").value });
+  draw();
+});
+document.getElementById("jump").addEventListener("click", function () {
+  spec.events.push({ kind: "notch", spot: Number(document.getElementById("spot").value) });
+  draw();
+});
+draw();
+</script>
+</body>
+</html>

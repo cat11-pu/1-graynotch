@@ -1,0 +1,13 @@
+{
+  "bits": 3,
+  "state": { "bits": 3, "pos": 0, "steps": 0, "traj": [], "reads": [] },
+  "events": [
+    { "kind": "turn", "dir": 1 },
+    { "kind": "turn", "dir": 1 },
+    { "kind": "read", "code": "110" },
+    { "kind": "notch", "spot": 7 },
+    { "kind": "turn", "dir": -1 },
+    { "kind": "read", "code": "000" },
+    { "kind": "notch", "spot": 0 }
+  ]
+}
