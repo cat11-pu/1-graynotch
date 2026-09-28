@@ -1,12 +1,21 @@
-// graycode.js：格雷码与二进制互转、环回最短距离（基线：一律给零与空串）
+// graycode.js：格雷码与二进制互转、环回最短距离
 export function codeOf(angle, bits) {
-  return "";
+  const gray = (angle ^ (angle >> 1)) >>> 0;
+  return gray.toString(2).padStart(bits, "0");
 }
 
 export function decodeOf(code) {
-  return -1;
+  let value = 0;
+  let running = 0;
+  for (const char of code) {
+    running ^= Number(char);
+    value = (value << 1) | running;
+  }
+  return value >>> 0;
 }
 
 export function ringDistance(from, to, bits) {
-  return -1;
+  const total = 1 << bits;
+  const forward = (((to - from) % total) + total) % total;
+  return Math.min(forward, total - forward);
 }
